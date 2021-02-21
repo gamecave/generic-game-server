@@ -41,8 +41,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('change-input', ({session_id, input_type}) => {
-    games[session_id].input_type = input_type;
-    socket.to(`players-${session_id}`).emit('change-input', input_type);
+    if(games[session_id]) {
+      games[session_id].input_type = input_type;
+      socket.to(`players-${session_id}`).emit('change-input', input_type);
+    }
   })
 
   socket.on('send-input', ({session_id, input_data}) => {
