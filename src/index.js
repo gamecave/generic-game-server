@@ -21,7 +21,8 @@ app.get('/create/:game_id', (req,res) => {
 
   const {game_id} = req.params;
   games[session_id] = {
-    game_id: game_id
+    game_id: game_id,
+    users: {}
   };
   console.warn(`creating ${session_id}`)
   res.json({session_id});
@@ -47,17 +48,18 @@ io.on('connection', (socket) => {
     }
   })
 
-  socket.on('send-input', ({session_id, input_data}) => {
-    socket.to(`host-${session_id}`).emit('send-input', input_data, socket.id);
+  socket.on('send-input', ({session_id, input_data, username}) => {
+    socket.to(`host-${session_id}`).emit('send-input', input_data, username);
   })
 
-  socket.on('join', ({session_id}) => {
+  socket.on('join', ({session_id, username}) => {
     console.warn(`Player joined ${session_id}`)
-    if (!games[session_id]) {
+    if (!games[session_id] && games[session_id].users[username]) {
       socket.emit('error', true);
     } else {
+      games[session_id].users[username] = true;
       socket.join(`players-${session_id}`)
-      socket.to(`host-${session_id}`).emit('create-player', socket.id)
+      socket.to(`host-${session_id}`).emit('create-player', username)
       socket.emit('change-input', games[session_id].input_type);
     }
   });
